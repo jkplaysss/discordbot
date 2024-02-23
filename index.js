@@ -1,37 +1,25 @@
-const {Client , GatewayIntentBits,Collection, Partials } = require("discord.js");
-console.clear()
-const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildPresences,
-        GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.GuildMessageTyping,
-        GatewayIntentBits.DirectMessages,
-        GatewayIntentBits.DirectMessageReactions,
-        GatewayIntentBits.DirectMessageTyping
-    ],
-    partials: [
-        Partials.Message,   
-        Partials.Channel
-    ]
+const fs = require("fs")
+
+module.exports = async (client) => {
+
+const SlashsArray = []
+
+  fs.readdir(`./Comandos`, (error, folder) => {
+  folder.forEach(subfolder => {
+fs.readdir(`./Comandos/${subfolder}/`, (error, files) => { 
+  files.forEach(files => {
+      
+  if(!files?.endsWith('.js')) return;
+  files = require(`../Comandos/${subfolder}/${files}`);
+  if(!files?.name) return;
+  client.slashCommands.set(files?.name, files);
+   
+  SlashsArray.push(files)
   });
-module.exports = client;
-
-client.slashCommands = new Collection();
-const {token} = require("./token.json");
-client.login(token);
-
-const evento = require("./handler/Events");
-evento.run(client);
-require("./handler/index")(client);
-
-process.on('unhandRejection', (reason, promise) => {
-    console.log(`🚫 Erro Detectado:\n\n` + reason, promise)
+    });
   });
-  process.on('uncaughtException', (error, origin) => {
-    console.log(`🚫 Erro Detectado:\n\n` + error, origin)
-  });
-
+});
+  client.on("ready", async () => {
+  client.guilds.cache.forEach(guild => guild.commands.set(SlashsArray))
+    });
+};
